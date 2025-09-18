@@ -8,7 +8,7 @@ down:
 	docker compose -f local.yml down
 
 down-v:
-	docker compose -f local.yml down -v
+	docker-compose -f local.yml down -v --rmi all
 
 banker-config:
 	doccker compose -f local.yml config
