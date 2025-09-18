@@ -2,35 +2,34 @@ build:
 	docker compose -f local.yml up --build -d --remove-orphans
 
 up:
-	docker compose -f local.yml up -d --remove-orphans
+	docker compose -f local.yml up -d
 
 down:
 	docker compose -f local.yml down
 
 down-v:
-	docker-compose -f local.yml down -v --rmi all
+	docker compose -f local.yml down -v --rmi all
 
 banker-config:
-	doccker compose -f local.yml config
+	docker compose -f local.yml config
 
 makemigrations:
-	docker compose -f local.yml --rm run api python manage.py makemigrations
+	docker compose -f local.yml run --rm api python manage.py makemigrations
 
 migrate:
-	docker compose -f local.yml --rm run api python manage.py migrate
+	docker compose -f local.yml run --rm api python manage.py migrate
 
 collectstatic:
-	docker compose -f local.yml --rm run api python manage.py collectstatic --noinput --clear
+	docker compose -f local.yml run --rm api python manage.py collectstatic --no-input --clear
 
 superuser:
-	docker compose -f local.yml --rm run api python manage.py createsuperuser
+	docker compose -f local.yml run --rm api python manage.py createsuperuser
 
 flush:
-	docker compose -f local.yml --rm run api python manage.py flush --noinput
+	docker compose -f local.yml run --rm api python manage.py flush
 
 network-inspect:
 	docker network inspect banker_local_nw
 
 banker-db:
-	docker compose -f local.yml exec postgres psql --username=postgres --dbname=postgres
-
+	docker compose -f local.yml exec postgres psql --username=alphaogilo --dbname=banker
