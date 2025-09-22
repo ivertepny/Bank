@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from os import getenv, path
 from loguru import logger
 from datetime import timedelta
+from sys import stdout
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
@@ -183,39 +184,70 @@ CELERY_WORKER_SEND_TASK_EVENTS = True
 
 # Logging configuration
 LOGGING_CONFIG = None
-LOGURU_LOGGING = {
-    "handlers": [
-        {
-            "sink": BASE_DIR / "logs/debug.log",
-            "level": "DEBUG",
-            "filter": lambda record: record["level"].no <= logger.level("WARNING").no,
-            "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
-            "{message}",
-            "rotation": "10MB",
-            "retention": "30 days",
-            "compression": "zip",
-        },
-        {
-            "sink": BASE_DIR / "logs/error.log",
-            "level": "ERROR",
-            "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
-            "{message}",
-            "rotation": "10MB",
-            "retention": "30 days",
-            "compression": "zip",
-            "backtrace": True,
-            "diagnose": True,
-        },
-    ],
-}
+
+# Determine logs directory and whether to use file sinks
+LOG_DIR = Path(getenv("LOG_DIR", str(BASE_DIR / "logs")))
+USE_FILE_LOGS = True
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    USE_FILE_LOGS = False
+
+if getenv("LOG_TO_STDOUT") == "1":
+    USE_FILE_LOGS = False
+
+if USE_FILE_LOGS:
+    LOGURU_LOGGING = {
+        "handlers": [
+            {
+                "sink": LOG_DIR / "debug.log",
+                "level": "DEBUG",
+                "filter": lambda record: record["level"].no <= logger.level("WARNING").no,
+                "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
+                "{message}",
+                "rotation": "10MB",
+                "retention": "30 days",
+                "compression": "zip",
+            },
+            {
+                "sink": LOG_DIR / "error.log",
+                "level": "ERROR",
+                "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
+                "{message}",
+                "rotation": "10MB",
+                "retention": "30 days",
+                "compression": "zip",
+                "backtrace": True,
+                "diagnose": True,
+            },
+        ],
+    }
+else:
+    LOGURU_LOGGING = {
+        "handlers": [
+            {
+                "sink": stdout,
+                "level": "DEBUG",
+                "filter": lambda record: record["level"].no <= logger.level("WARNING").no,
+                "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
+                "{message}",
+            },
+            {
+                "sink": stdout,
+                "level": "ERROR",
+                "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - "
+                "{message}",
+                "backtrace": True,
+                "diagnose": True,
+            },
+        ],
+    }
+
 logger.configure(**LOGURU_LOGGING)
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {"loguru": {"class": "interceptor.InterceptHandler"}},
-    "root": {
-        "level": "DEBUG",
-        "handlers": ["loguru"]
-    },
+    "root": {"handlers": ["loguru"], "level": "DEBUG"},
 }
